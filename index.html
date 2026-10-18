@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="description" content="Precision image resizing studio with extended image-format support, exact pixel control, and private in-browser processing." />
+  <title>Image Resizer — kayralrics.com</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08080a;
+      --panel: #111114;
+      --panel-2: #17171b;
+      --panel-3: #202025;
+      --line: #2b2b32;
+      --muted: #9898a3;
+      --text: #f5f5f7;
+      --red: #f52d43;
+      --red-2: #ff5364;
+      --red-dark: #54151e;
+      --green: #7ee0ae;
+      --radius: 18px;
+      --shadow: 0 24px 70px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 72% -8%, rgba(245,45,67,.12), transparent 34rem),
+        radial-gradient(ellipse at 0% 38%, rgba(112,20,31,.10), transparent 30rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -.01em;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, label:focus-within {
+      outline: 2px solid var(--red-2);
+      outline-offset: 3px;
+    }
+    button:disabled { opacity: .42; cursor: not-allowed; transform: none !important; }
+    .site-header {
+      height: 78px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex;
+      align-items: center;
+      background: rgba(8,8,10,.72);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner, main, .site-footer { width: min(1240px, calc(100% - 44px)); margin: 0 auto; }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); min-width: 0; }
+    .brand-mark {
+      width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto;
+      color: white; font-weight: 900; font-size: 14px; letter-spacing: -.08em;
+      border-radius: 12px; background: linear-gradient(145deg, var(--red-2), #c61029 80%);
+      box-shadow: 0 8px 28px rgba(245,45,67,.25);
+    }
+    .brand-name { font-size: 15px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .brand-sub { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); letter-spacing: .015em; font-weight: 500; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .local-badge { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; color: #c8c8d0; font-size: 11px; font-weight: 750; letter-spacing: .075em; text-transform: uppercase; white-space: nowrap; }
+    .local-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 12px rgba(126,224,174,.55); }
+    main { padding: 42px 0 58px; }
+    .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 28px; }
+    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--red-2); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 850; margin-bottom: 13px; }
+    .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--red); border-radius: 10px; }
+    h1 { margin: 0; font-size: clamp(32px, 4vw, 52px); line-height: 1.04; letter-spacing: -.055em; font-weight: 850; }
+    h1 .accent { color: var(--red-2); }
+    .hero-copy { margin: 14px 0 0; color: #a5a5af; max-width: 600px; font-size: 14px; line-height: 1.7; }
+    .hero-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding-bottom: 4px; }
+    .chip { padding: 8px 11px; border: 1px solid #29292f; background: rgba(255,255,255,.025); color: #bdbdc5; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .chip strong { color: #fff; font-weight: 800; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(160deg, rgba(23,23,27,.97), rgba(14,14,17,.98)); box-shadow: var(--shadow); overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 19px 21px; border-bottom: 1px solid rgba(255,255,255,.065); }
+    .section-title { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .025em; }
+    .section-subtitle { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .tiny-label { display: inline-flex; align-items: center; gap: 6px; color: #a9a9b2; font-size: 10px; text-transform: uppercase; letter-spacing: .095em; font-weight: 800; }
+    .tiny-label .dot { background: var(--red); width: 5px; height: 5px; border-radius: 50%; }
+    .preview-panel { min-height: 438px; }
+    .preview-stage {
+      height: 350px; padding: 23px; display: flex; align-items: center; justify-content: center; position: relative;
+      background-color: #0c0c0f;
+      background-image: radial-gradient(rgba(255,255,255,.055) .8px, transparent .8px);
+      background-size: 17px 17px;
+    }
+    .preview-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 1px solid rgba(255,255,255,.025); }
+    .preview-canvas {
+      display: none; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
+      background-color: #151519;
+      background-image: linear-gradient(45deg,#222228 25%,transparent 25%),linear-gradient(-45deg,#222228 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#222228 75%),linear-gradient(-45deg,transparent 75%,#222228 75%);
+      background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0;
+      box-shadow: 0 8px 35px rgba(0,0,0,.4); border-radius: 2px;
+    }
+    .empty-state { text-align: center; max-width: 340px; padding: 20px; }
+    .empty-icon { width: 62px; height: 62px; display: grid; place-items: center; margin: 0 auto 17px; border: 1px solid #3a2025; border-radius: 20px; background: rgba(245,45,67,.075); color: var(--red-2); }
+    .empty-icon svg { width: 27px; height: 27px; }
+    .empty-state h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.025em; }
+    .empty-state p { margin: 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
+    .stage-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: rgba(0,0,0,.15); border-top: 1px solid rgba(255,255,255,.055); font-size: 11px; color: #9c9ca6; }
+    .stage-meta strong { color: #e7e7eb; font-weight: 750; }
+    .stage-meta .meta-right { text-align: right; }
+    .queue-panel { margin-top: 18px; }
+    .queue-actions { display: flex; align-items: center; gap: 8px; }
+    .queue-count { font-size: 11px; color: #9c9ca6; padding: 5px 8px; background: #222228; border-radius: 6px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; padding: 10px 13px; background: #1a1a1f; color: #f4f4f6; font-size: 12px; font-weight: 750; transition: background .16s ease, border-color .16s ease, transform .16s ease; white-space: nowrap; }
+    .button:hover:not(:disabled) { border-color: #51515b; background: #24242a; transform: translateY(-1px); }
+    .button svg { width: 15px; height: 15px; }
+    .button-primary { background: linear-gradient(135deg, var(--red-2), #e21b34 85%); border-color: #ff5164; color: #fff; box-shadow: 0 7px 24px rgba(245,45,67,.2); }
+    .button-primary:hover:not(:disabled) { background: linear-gradient(135deg, #ff6676, #ef243e 85%); border-color: #ff6877; }
+    .button-quiet { border-color: transparent; background: transparent; color: #aaaab4; padding: 8px; }
+    .button-quiet:hover:not(:disabled) { color: white; background: rgba(255,255,255,.06); }
+    .upload-area { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 15px; min-height: 89px; padding: 17px; border: 1px dashed #4b2b31; border-radius: 13px; background: rgba(245,45,67,.035); transition: border-color .15s ease, background .15s ease; }
+    .upload-area.dragover { border-color: var(--red-2); background: rgba(245,45,67,.12); }
+    .upload-area .upload-symbol { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #4b2b31; border-radius: 11px; color: var(--red-2); background: #211317; }
+    .upload-symbol svg { width: 20px; height: 20px; }
+    .upload-text { min-width: 0; }
+    .upload-text strong { display: block; font-size: 12px; margin-bottom: 4px; }
+    .upload-text span { font-size: 11px; line-height: 1.5; color: var(--muted); }
+    .file-input { display: none; }
+    .queue-list { padding: 0 15px 15px; display: grid; gap: 8px; }
+    .queue-empty { text-align: center; padding: 8px 10px 18px; color: #777782; font-size: 11px; }
+    .queue-item { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 10px; border: 1px solid #29292f; border-radius: 11px; background: rgba(255,255,255,.018); transition: border-color .15s ease, background .15s ease; }
+    .queue-item.active { border-color: rgba(245,45,67,.65); background: rgba(245,45,67,.065); }
+    .queue-thumb { width: 46px; height: 46px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border: 1px solid #34343c; border-radius: 7px; color: #82828d; background: #0c0c0f; cursor: pointer; }
+    .queue-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .queue-details { min-width: 0; flex: 1; cursor: pointer; }
+    .queue-name { color: #eeeeF1; font-size: 11px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .queue-meta { color: #878792; margin-top: 5px; font-size: 10px; display: flex; flex-wrap: wrap; gap: 5px 9px; line-height: 1.4; }
+    .queue-result { color: var(--green); }
+    .queue-error { color: var(--red-2); }
+    .queue-item .remove { padding: 6px; }
+    .queue-item .download-mini { color: #e7e7ed; padding: 7px; }
+    .settings-panel { position: sticky; top: 18px; }
+    .settings-body { padding: 18px; }
+    .setting-block + .setting-block { margin-top: 22px; }
+    .setting-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+    .setting-heading label, .setting-label { color: #e7e7eb; font-size: 12px; font-weight: 750; }
+    .setting-help { color: #868691; font-size: 10px; line-height: 1.55; margin-top: 8px; }
+    .dimensions { display: grid; grid-template-columns: minmax(0,1fr) 30px minmax(0,1fr); align-items: end; gap: 7px; }
+    .field-wrap label { display: block; color: #878792; font-size: 10px; font-weight: 700; margin: 0 0 7px 1px; }
+    .field, .select-field { width: 100%; height: 42px; color: #f6f6f8; border: 1px solid #34343c; border-radius: 9px; background: #0d0d10; padding: 0 11px; font-size: 13px; font-weight: 750; min-width: 0; }
+    .field:focus, .select-field:focus { border-color: var(--red); outline: none; box-shadow: 0 0 0 3px rgba(245,45,67,.12); }
+    .field-suffix { position: relative; }
+    .field-suffix .field { padding-right: 31px; }
+    .suffix { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: #6e6e79; font-size: 9px; font-weight: 800; pointer-events: none; }
+    .lock-button { width: 30px; height: 42px; align-self: end; display: grid; place-items: center; color: #777782; border: 1px solid #34343c; border-radius: 8px; background: #18181d; padding: 0; }
+    .lock-button[aria-pressed="true"] { color: var(--red-2); border-color: #71303a; background: #291519; }
+    .lock-button svg { width: 15px; height: 15px; }
+    .select-field { appearance: none; padding-right: 34px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239898a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    .mode-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+    .mode-option { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 8px; background: #0e0e12; color: #a3a3ad; border: 1px solid #303038; border-radius: 9px; text-align: left; transition: border-color .15s ease, background .15s ease; }
+    .mode-option:hover { border-color: #555560; }
+    .mode-option[aria-pressed="true"] { color: white; background: rgba(245,45,67,.09); border-color: var(--red); box-shadow: inset 0 0 0 1px rgba(245,45,67,.12); }
+    .mode-icon { width: 100%; height: 25px; display: flex; align-items: center; justify-content: center; }
+    .mode-icon svg { width: 26px; height: 26px; }
+    .mode-name { font-size: 10px; font-weight: 800; }
+    .mode-desc { color: #777782; font-size: 9px; line-height: 1.35; }
+    .mode-option[aria-pressed="true"] .mode-desc { color: #c3a0a5; }
+    .check-row { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+    .check-row input { accent-color: var(--red); width: 15px; height: 15px; margin: 0; }
+    .check-row span { font-size: 11px; font-weight: 650; color: #c9c9d0; }
+    .color-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .color-row input[type="color"] { width: 36px; height: 32px; padding: 3px; border: 1px solid #34343c; border-radius: 8px; background: #0d0d10; cursor: pointer; }
+    .color-row span { color: #9898a3; font-size: 10px; }
+    .quality-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+    .quality-number { color: var(--red-2); font-size: 11px; font-weight: 850; font-variant-numeric: tabular-nums; }
+    input[type="range"] { appearance: none; width: 100%; height: 4px; border-radius: 999px; background: #34343b; accent-color: var(--red); }
+    input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--red-2); border: 2px solid #ffe8eb; box-shadow: 0 0 0 3px rgba(245,45,67,.17); }
+    input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--red-2); border: 2px solid #ffe8eb; box-shadow: 0 0 0 3px rgba(245,45,67,.17); }
+    .quality-ticks { display: flex; justify-content: space-between; color: #686872; font-size: 9px; margin-top: 7px; }
+    .resize-footer { padding-top: 19px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,.07); }
+    .resize-button { width: 100%; height: 47px; font-size: 13px; border-radius: 10px; }
+    .resize-button svg { width: 17px; height: 17px; }
+    .privacy-note { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 12px; color: #73737e; font-size: 10px; text-align: center; line-height: 1.5; }
+    .privacy-note svg { width: 13px; height: 13px; color: var(--green); flex: 0 0 auto; }
+    .status-message { margin-top: 11px; padding: 10px 11px; border: 1px solid #303038; border-radius: 8px; font-size: 11px; line-height: 1.5; color: #c9c9d0; display: none; }
+    .status-message.show { display: block; }
+    .status-message.success { border-color: #294c3b; background: rgba(56,145,96,.09); color: #a7e7c4; }
+    .status-message.error { border-color: #5a252d; background: rgba(245,45,67,.08); color: #ffacb5; }
+    .status-message.info { border-color: #443c2b; background: rgba(210,160,67,.07); color: #e8d3a7; }
+    .results-bar { display: none; padding: 15px 18px; border-top: 1px solid rgba(255,255,255,.07); background: rgba(126,224,174,.045); }
+    .results-bar.show { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .results-title { font-size: 12px; font-weight: 800; }
+    .results-sub { margin-top: 4px; color: #8d9c94; font-size: 10px; }
+    .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .site-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0 28px; border-top: 1px solid rgba(255,255,255,.07); color: #777782; font-size: 11px; }
+    .site-footer a { color: #e4e4e8; font-weight: 800; text-decoration: none; }
+    .site-footer a:hover { color: var(--red-2); }
+    .footer-right { display: flex; align-items: center; gap: 7px; }
+    .footer-heart { color: var(--red); }
+    .spinning { animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 1000px) {
+      .workspace { grid-template-columns: minmax(0,1fr) 330px; }
+      .hero { align-items: flex-start; flex-direction: column; gap: 20px; }
+      .hero-chips { justify-content: flex-start; }
+    }
+    @media (max-width: 760px) {
+      .header-inner, main, .site-footer { width: min(100% - 28px, 620px); }
+      .site-header { height: 70px; }
+      .brand-mark { width: 38px; height: 38px; }
+      .brand-name { font-size: 13px; }
+      .local-badge { font-size: 9px; padding: 8px 9px; }
+      main { padding-top: 30px; }
+      .workspace { grid-template-columns: minmax(0,1fr); }
+      .settings-panel { position: static; }
+      .preview-stage { height: min(72vw, 350px); min-height: 245px; padding: 14px; }
+      .panel-head { padding: 16px; }
+      .settings-body { padding: 17px; }
+      .site-footer { align-items: flex-start; flex-direction: column; }
+    }
+    @media (max-width: 420px) {
+      .brand-sub { display: none; }
+      .local-badge { max-width: 118px; white-space: normal; line-height: 1.3; }
+      .queue-actions .button { padding: 9px; }
+      .queue-actions .button .button-label { display: none; }
+      .dimensions { gap: 5px; }
+      .field { padding-left: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+    /* KAYRALRICS / IMAGE RESIZER — BLACKOUT RED INTERFACE */
+    :root {
+      --bg: #000000; --panel: #050505; --panel-2: #090909; --panel-3: #101010;
+      --line: #351018; --muted: #8e8587; --text: #f4f1f2;
+      --red: #ff0028; --red-2: #ff173d; --red-dark: #39000b; --green: #ff173d;
+      --radius: 3px; --shadow: 0 20px 70px rgba(0,0,0,.8);
+    }
+    html { background:#000; }
+    body {
+      background:#000; color:#f6f3f4; letter-spacing:0;
+      font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      position:relative; isolation:isolate;
+    }
+    body::before {
+      content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.36;
+      background-image:linear-gradient(rgba(255,0,40,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(255,0,40,.075) 1px,transparent 1px);
+      background-size:48px 48px; mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.5) 52%,transparent 100%);
+    }
+    body::after {
+      content:""; pointer-events:none; position:fixed; z-index:-1; inset:0;
+      background:radial-gradient(ellipse at 50% 0%,rgba(255,0,40,.09),transparent 35rem);
+    }
+    .site-header { height:74px; background:rgba(0,0,0,.94); border-bottom:1px solid #5b0014; backdrop-filter:blur(16px); }
+    .header-inner, main, .site-footer { width:min(1320px,calc(100% - 52px)); }
+    .brand { gap:14px; }
+    .brand-mark { width:42px;height:42px;border-radius:2px;background:#ff0028;color:#000;box-shadow:0 0 0 1px #ff0028,5px 5px 0 #36000b;font-size:15px; }
+    .brand-name { letter-spacing:.16em; font-size:14px; }
+    .brand-sub { text-transform:uppercase; letter-spacing:.13em; font-size:9px; color:#8f7a7e; }
+    .local-badge { border-radius:2px;border-color:#48101b;background:#050505;color:#e1c9ce; letter-spacing:.1em; }
+    .local-dot { border-radius:0;background:#ff0028;box-shadow:0 0 11px rgba(255,0,40,.7); transform:rotate(45deg); }
+    main { padding:54px 0 64px; }
+    .hero { align-items:flex-end; margin-bottom:24px; gap:30px; }
+    .eyebrow { letter-spacing:.22em;color:#ff2344;font-size:10px; }
+    .eyebrow::before { width:28px;height:1px;border-radius:0;background:#ff0028;box-shadow:0 0 10px #ff0028; }
+    h1 { font-size:clamp(38px,5.1vw,68px); line-height:.99; letter-spacing:-.065em; text-transform:uppercase; }
+    h1 .accent { color:#ff0028; text-shadow:0 0 38px rgba(255,0,40,.14); }
+    .hero-copy { color:#a69a9d;font-size:13px;max-width:620px;line-height:1.8;margin-top:17px; }
+    .hero-chips { gap:6px; }
+    .chip { border-radius:2px;border-color:#3e0a15;background:#030303;color:#bdadb1;padding:8px 10px;font-size:10px;letter-spacing:.025em; }
+    .chip strong { color:#ff2b49; }
+    .format-band { border-top:1px solid #4a0915;border-bottom:1px solid #4a0915;padding:13px 0 12px;margin:26px 0 22px;position:relative; }
+    .format-band::before,.format-band::after { content:"";position:absolute;width:7px;height:7px;background:#ff0028; }
+    .format-band::before { left:0;top:-4px; }.format-band::after { right:0;bottom:-4px; }
+    .format-band-label { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:11px; }
+    .format-band-note { font-size:9px;letter-spacing:.19em;color:#6e555a;font-weight:800; }
+    .format-tags { display:flex;flex-wrap:wrap;gap:6px; }
+    .format-tags span { display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border:1px solid #330710;background:#050505;color:#d2c3c6;font-size:9px;font-weight:800;letter-spacing:.12em; }
+    .format-tags span:last-child { border-color:#ff0028;color:#ff2344; }
+    .format-footnote { margin:9px 0 0;color:#705d61;font-size:9px;line-height:1.6; }
+    .workspace { grid-template-columns:minmax(0,1fr) 360px;gap:14px; }
+    .panel { position:relative;border:1px solid #3b0812;border-radius:2px;background:rgba(3,3,3,.97);box-shadow:0 14px 50px rgba(0,0,0,.72); }
+    .panel::before { content:"";position:absolute;left:-1px;top:-1px;width:34px;height:1px;background:#ff0028;z-index:2;box-shadow:0 0 12px rgba(255,0,40,.6); }
+    .panel-head { padding:18px 20px;background:linear-gradient(90deg,rgba(255,0,40,.055),transparent 68%);border-bottom:1px solid #28050c; }
+    .section-title { font-size:12px;text-transform:uppercase;letter-spacing:.13em; }
+    .section-subtitle { color:#76686b;font-size:10px;letter-spacing:.025em; }
+    .tiny-label { color:#a08b90;font-size:9px;letter-spacing:.13em; }
+    .tiny-label .dot { width:5px;height:5px;border-radius:0;background:#ff0028; }
+    .preview-panel { min-height:430px; }
+    .preview-stage { height:350px;background-color:#000;background-image:linear-gradient(rgba(255,0,40,.065) 1px,transparent 1px),linear-gradient(90deg,rgba(255,0,40,.065) 1px,transparent 1px);background-size:24px 24px; }
+    .preview-stage::after { border:1px solid rgba(255,0,40,.13); }
+    .preview-canvas { border-radius:0;box-shadow:0 0 0 1px #3b1018,0 12px 40px rgba(0,0,0,.8); }
+    .empty-icon { border:1px solid #ff0028;border-radius:2px;background:#100005;color:#ff173d;box-shadow:4px 4px 0 #36000b; }
+    .empty-state h3 { text-transform:uppercase;letter-spacing:.04em;font-size:14px; }
+    .empty-state p { color:#8e7d81;font-size:11px; }
+    .stage-meta { background:#030303;border-top:1px solid #28050c;color:#806e72;font-size:10px; }
+    .stage-meta strong { color:#f5eaed; }
+    .queue-panel { margin-top:14px; }
+    .queue-count { background:#170006;border:1px solid #4a0816;border-radius:2px;color:#ff3c56; }
+    .button { border-radius:2px;border-color:#3a0a14;background:#090909;color:#f0e9eb;font-size:10px;letter-spacing:.055em;text-transform:uppercase;padding:10px 12px; }
+    .button:hover:not(:disabled) { border-color:#ff0028;background:#160006;transform:translateY(-1px); }
+    .button-primary { color:#000;background:#ff0028;border-color:#ff0028;box-shadow:3px 3px 0 #43000d; }
+    .button-primary:hover:not(:disabled) { color:#000;background:#ff3452;border-color:#ff3452; }
+    .button-quiet { background:transparent;border-color:transparent;color:#b68e96; }
+    .upload-area { min-height:95px;margin:14px;border:1px dashed #6e0d20;border-radius:2px;background:rgba(255,0,40,.025); }
+    .upload-area:hover,.upload-area.dragover { border-color:#ff0028;background:rgba(255,0,40,.075);box-shadow:inset 0 0 28px rgba(255,0,40,.035); }
+    .upload-area .upload-symbol { border:1px solid #7b0a1f;border-radius:2px;background:#120005;color:#ff173d; }
+    .upload-text strong { font-size:11px;text-transform:uppercase;letter-spacing:.06em; }
+    .upload-text span { font-size:10px;color:#816d72; }
+    .queue-list { gap:6px; }
+    .queue-item { border:1px solid #281017;border-radius:2px;background:#030303; }
+    .queue-item.active { border-color:#ff0028;background:rgba(255,0,40,.06);box-shadow:inset 2px 0 0 #ff0028; }
+    .queue-thumb { border-color:#45101b;border-radius:1px;background:#000; }
+    .queue-name { color:#f6edf0;font-size:10px; }
+    .queue-meta { color:#806e73;font-size:9px; }
+    .queue-result { color:#ff465f; }
+    .queue-error { color:#ff2748; }
+    .settings-panel { top:12px; }
+    .settings-body { padding:18px 19px; }
+    .setting-block + .setting-block { margin-top:21px; }
+    .setting-heading label,.setting-label { color:#e4dadd;font-size:11px;text-transform:uppercase;letter-spacing:.035em; }
+    .setting-help { color:#78676b;font-size:9px;line-height:1.7; }
+    .field-wrap label { color:#826e73;font-size:9px;text-transform:uppercase;letter-spacing:.13em; }
+    .field,.select-field { height:41px;border:1px solid #3e1019;border-radius:2px;background:#020202;color:#fbf2f4;font-size:12px; }
+    .field:focus,.select-field:focus { border-color:#ff0028;box-shadow:0 0 0 2px rgba(255,0,40,.12); }
+    .lock-button { border:1px solid #3e1019;border-radius:2px;background:#090909; }
+    .lock-button[aria-pressed="true"] { color:#ff3150;border-color:#ff0028;background:#160006; }
+    .mode-option { background:#030303;color:#8d7b7f;border:1px solid #351018;border-radius:2px; }
+    .mode-option[aria-pressed="true"] { color:#fff;background:#130006;border-color:#ff0028;box-shadow:inset 0 0 0 1px rgba(255,0,40,.13); }
+    .mode-option[aria-pressed="true"] .mode-desc { color:#bd7c88; }
+    .mode-name { text-transform:uppercase;letter-spacing:.08em;font-size:9px; }
+    .mode-desc { font-size:8px;color:#76666a; }
+    .check-row span { color:#bbaeb1;font-size:10px; }
+    .check-row input { accent-color:#ff0028; }
+    .color-row input[type="color"] { border:1px solid #3e1019;border-radius:2px;background:#000; }
+    .color-row span { color:#826e73;font-size:9px; }
+    .quality-number { color:#ff2144; }
+    input[type="range"] { background:#40101a;accent-color:#ff0028; }
+    input[type="range"]::-webkit-slider-thumb { background:#ff0028;border:2px solid #050505;box-shadow:0 0 0 1px #ff0028; }
+    input[type="range"]::-moz-range-thumb { background:#ff0028;border:2px solid #050505;box-shadow:0 0 0 1px #ff0028; }
+    .quality-ticks { color:#705e63;font-size:8px; }
+    .resize-footer { border-top:1px solid #351018; }
+    .resize-button { height:48px;font-size:11px;letter-spacing:.13em; }
+    .privacy-note { color:#715d63;font-size:9px; }
+    .privacy-note svg { color:#ff1b3e; }
+    .status-message { border:1px solid #351018;border-radius:2px;background:#050505;color:#ddc9ce;font-size:10px; }
+    .status-message.success { border-color:#681025;background:#160006;color:#ffb5c2; }
+    .status-message.error { border-color:#ff0028;background:#170005;color:#ff9aa9; }
+    .status-message.info { border-color:#6d0d21;background:#100004;color:#ffabb8; }
+    .results-bar { border-top:1px solid #4b0916;background:rgba(255,0,40,.04); }
+    .results-sub { color:#8f777d; }
+    .site-footer { border-top:1px solid #3b0812;color:#766368; }
+    .site-footer a { color:#ff2345;text-transform:uppercase;letter-spacing:.11em; }
+    .site-footer a:hover { color:#ff6179; }
+    .footer-heart { color:#ff0028; }
+    @media (max-width:1000px) { .workspace { grid-template-columns:minmax(0,1fr) 330px; } }
+    @media (max-width:760px) {
+      .header-inner,main,.site-footer { width:min(100% - 28px,620px); }
+      main { padding-top:32px; }
+      .hero { gap:16px; }
+      .format-band { margin-top:23px; }
+      .preview-stage { background-size:20px 20px; }
+    }
+    @media (max-width:420px) { .format-band-note { display:none; } .format-tags span { font-size:8px;padding:4px 7px; } }
+
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Image Resizer home">
+        <span class="brand-mark" aria-hidden="true">IR.</span>
+        <span><span class="brand-name">Image Resizer</span><span class="brand-sub">Precision image scaling</span></span>
+      </a>
+      <div class="header-right"><div class="local-badge"><span class="local-dot"></span> Files stay on your device</div></div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow">Precision image processing / 001</div>
+        <h1 id="page-title">Command every pixel.<br /><span class="accent">Lose nothing.</span></h1>
+        <p class="hero-copy">A precision workspace for exact dimensions, controlled scaling, and extended format conversion. Batch your images. Dial in every pixel. Keep your files local.</p>
+      </div>
+      <div class="hero-chips" aria-label="Features">
+        <div class="chip"><strong>Exact</strong> pixel control</div>
+        <div class="chip"><strong>High</strong> quality scaling</div>
+        <div class="chip"><strong>PNG · JPG · WEBP · AVIF</strong></div>
+      </div>
+    </section>
+
+    <section class="format-band" aria-label="Image format coverage">
+      <div class="format-band-label"><span class="tiny-label"><span class="dot"></span> FORMAT MATRIX</span><span class="format-band-note">ONE WORKSPACE. MORE WAYS IN.</span></div>
+      <div class="format-tags"><span>PNG</span><span>JPG / JPEG</span><span>WEBP</span><span>AVIF</span><span>GIF</span><span>BMP</span><span>TIFF</span><span>SVG</span><span>HEIC / HEIF</span><span>PSD</span><span>ICO</span><span>JP2</span><span>JXL</span><span>QOI</span><span>PPM / PGM / PBM</span><span>+ MORE*</span></div>
+      <p class="format-footnote">*Support depends on the browser and decoder available for each format. Extended decoders load only when needed; files stay on your device.</p>
+    </section>
+
+    <section class="workspace" aria-label="Image resizing workspace">
+      <div class="left-column">
+        <section class="panel preview-panel" aria-labelledby="preview-title">
+          <div class="panel-head">
+            <div><h2 class="section-title" id="preview-title">Live preview</h2><div class="section-subtitle">Preview updates as you change your settings</div></div>
+            <span class="tiny-label"><span class="dot"></span> <span id="preview-state">Waiting for image</span></span>
+          </div>
+          <div class="preview-stage" id="preview-stage">
+            <canvas class="preview-canvas" id="preview-canvas" aria-label="Resized image preview"></canvas>
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/><path d="M16 3v4m-2-2h4"/></svg></div>
+              <h3>Your next great resize starts here</h3>
+              <p>Drop an image into the upload area below, or browse your files to get started.</p>
+            </div>
+          </div>
+          <div class="stage-meta"><div id="source-meta">No image selected</div><div class="meta-right" id="output-meta">Output: —</div></div>
+        </section>
+
+        <section class="panel queue-panel" aria-labelledby="queue-title">
+          <div class="panel-head">
+            <div><h2 class="section-title" id="queue-title">Image queue</h2><div class="section-subtitle">Select an image to preview it</div></div>
+            <div class="queue-actions"><span class="queue-count" id="queue-count">0 images</span><button class="button" id="add-images-button" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="button-label">Add images</span></button></div>
+          </div>
+          <input class="file-input" id="file-input" type="file" accept="image/*,.heic,.heif,.tif,.tiff,.bmp,.ico,.svg,.avif,.jxl,.psd,.xcf,.tga,.dds,.jp2,.j2k,.3fr,.ari,.arw,.bay,.cap,.cr2,.cr3,.crw,.dcr,.dcs,.dng,.drf,.eip,.erf,.fff,.gpr,.iiq,.k25,.kdc,.mdc,.mef,.mos,.mrw,.nef,.nrw,.obm,.orf,.pef,.ptx,.pxn,.r3d,.raf,.raw,.rw2,.rwl,.sr2,.srf,.srw,.x3f,.eps,.pdf,.ppm,.pgm,.pbm,.pnm,.qoi,.pcx,.pfm,.exr,.hdr,.dpx,.cin,.fits,.icns,.jng,.pict,.sgi,.sun,.wpg,.xbm,.xpm" multiple />
+          <div class="upload-area" id="upload-area" role="button" tabindex="0" aria-label="Choose images or drag and drop files here">
+            <div class="upload-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m-4 4 4-4 4 4"/><path d="M20 16.5v2A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-2"/></svg></div>
+            <div class="upload-text"><strong>Drop images here or <span style="color:var(--red-2)">browse files</span></strong><span>Drop almost any image format · Batch processing</span></div>
+          </div>
+          <div class="queue-list" id="queue-list"><div class="queue-empty">Your selected images will appear here.</div></div>
+          <div class="results-bar" id="results-bar">
+            <div><div class="results-title" id="results-title">Images resized</div><div class="results-sub" id="results-sub">Your files are ready to download.</div></div>
+            <div class="result-actions"><button class="button" id="download-zip-button" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>Download all (.zip)</button></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="panel settings-panel" aria-labelledby="settings-title">
+        <div class="panel-head"><div><h2 class="section-title" id="settings-title">Resize settings</h2><div class="section-subtitle">Fine-tune your output</div></div><span class="tiny-label">01 / 04</span></div>
+        <div class="settings-body">
+          <div class="setting-block">
+            <div class="setting-heading"><label for="width-input">Output dimensions</label><span class="tiny-label">PX</span></div>
+            <div class="dimensions">
+              <div class="field-wrap"><label for="width-input">Width</label><div class="field-suffix"><input class="field" id="width-input" type="number" inputmode="numeric" min="1" max="16000" step="1" value="1080" /><span class="suffix">W</span></div></div>
+              <button class="lock-button" id="lock-button" type="button" aria-label="Lock aspect ratio" aria-pressed="true" title="Aspect ratio locked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></button>
+              <div class="field-wrap"><label for="height-input">Height</label><div class="field-suffix"><input class="field" id="height-input" type="number" inputmode="numeric" min="1" max="16000" step="1" value="1080" /><span class="suffix">H</span></div></div>
+            </div>
+            <div class="setting-help" id="dimension-help">Aspect ratio locked. Change width or height to keep the image proportional.</div>
+          </div>
+
+          <div class="setting-block">
+            <div class="setting-heading"><label for="preset-select">Quick size presets</label></div>
+            <select class="select-field" id="preset-select">
+              <option value="custom">Custom dimensions</option>
+              <option value="512x512">Avatar / Profile — 512 × 512</option>
+              <option value="1080x1080">Social square — 1080 × 1080</option>
+              <option value="1080x1350">Social portrait — 1080 × 1350</option>
+              <option value="1080x1920">Story / Reel — 1080 × 1920</option>
+              <option value="1280x720">HD / Video thumbnail — 1280 × 720</option>
+              <option value="1920x1080">Full HD — 1920 × 1080</option>
+              <option value="1920x600">Website hero — 1920 × 600</option>
+              <option value="3840x2160">4K UHD — 3840 × 2160</option>
+            </select>
+          </div>
+
+          <div class="setting-block">
+            <div class="setting-heading"><span class="setting-label">Fit behavior</span></div>
+            <div class="mode-grid" role="group" aria-label="Image fit behavior">
+              <button class="mode-option" type="button" data-mode="contain" aria-pressed="true"><span class="mode-icon"><svg viewBox="0 0 32 28" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="2.5" width="27" height="23" rx="2" stroke-dasharray="2 2"/><rect x="7" y="5" width="18" height="18" rx="1.5" stroke="var(--red-2)"/><path d="M9 18l5-5 3 3 2-2 4 4"/></svg></span><span class="mode-name">Contain</span><span class="mode-desc">Keep all content</span></button>
+              <button class="mode-option" type="button" data-mode="cover" aria-pressed="false"><span class="mode-icon"><svg viewBox="0 0 32 28" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="2.5" width="27" height="23" rx="2" stroke-dasharray="2 2"/><rect x="3.5" y="5" width="25" height="18" rx="1.5" stroke="var(--red-2)"/><path d="M6 18l6-6 4 4 3-3 7 7"/></svg></span><span class="mode-name">Cover</span><span class="mode-desc">Fill, crop edges</span></button>
+              <button class="mode-option" type="button" data-mode="stretch" aria-pressed="false"><span class="mode-icon"><svg viewBox="0 0 32 28" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="2.5" width="27" height="23" rx="2" stroke-dasharray="2 2"/><rect x="4.5" y="3.5" width="23" height="21" rx="1.5" stroke="var(--red-2)"/><path d="M7 18l5-5 4 4 3-3 6 6"/></svg></span><span class="mode-name">Stretch</span><span class="mode-desc">Exact size, may distort</span></button>
+            </div>
+            <div class="setting-help" id="mode-help">Contain preserves the full image and adds space where needed.</div>
+          </div>
+
+          <div class="setting-block">
+            <div class="setting-heading"><label for="format-select">Export format</label></div>
+            <select class="select-field" id="format-select">
+              <option value="image/png">PNG — lossless / transparency</option>
+              <option value="image/jpeg">JPEG — universal photo format</option>
+              <option value="image/webp">WebP — compact / modern</option>
+              <option value="image/avif">AVIF — next-gen compression</option>
+              <option value="image/gif">GIF — indexed color</option>
+              <option value="image/bmp">BMP — bitmap</option>
+              <option value="image/tiff">TIFF — high-quality archive</option>
+              <option value="image/svg+xml">SVG — embedded raster canvas</option>
+              <option value="image/vnd.adobe.photoshop">PSD — Photoshop-compatible</option>
+              <option value="image/x-icon">ICO — icon file</option>
+              <option value="image/jp2">JP2 — JPEG 2000</option>
+              <option value="image/jxl">JXL — JPEG XL</option>
+              <option value="image/x-tga">TGA — Truevision</option>
+              <option value="image/x-portable-pixmap">PPM — portable pixmap</option>
+              <option value="image/x-portable-graymap">PGM — portable graymap</option>
+              <option value="image/x-portable-bitmap">PBM — portable bitmap</option>
+              <option value="image/qoi">QOI — Quite OK Image</option>
+              <option value="image/x-xcf">XCF — GIMP project</option>
+            </select>
+          </div>
+
+          <div class="setting-block">
+            <div class="setting-heading"><span class="setting-label">Canvas background</span></div>
+            <label class="check-row"><input id="transparent-input" type="checkbox" checked /><span>Keep transparency where supported</span></label>
+            <div class="color-row"><input id="background-input" type="color" value="#ffffff" aria-label="Background fill color" /><span id="background-help">Used when transparency is off, or for JPEG.</span></div>
+          </div>
+
+          <div class="setting-block" id="quality-block">
+            <div class="quality-row"><label class="setting-label" for="quality-input">Export quality</label><span class="quality-number" id="quality-value">92%</span></div>
+            <input id="quality-input" type="range" min="50" max="100" value="92" step="1" />
+            <div class="quality-ticks"><span>Smaller file</span><span>Higher quality</span></div>
+            <div class="setting-help">Quality applies to lossy formats. PNG export is lossless; support varies by browser or decoder.</div>
+          </div>
+
+          <div class="resize-footer">
+            <button class="button button-primary resize-button" id="resize-button" type="button" disabled><svg id="resize-button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3m13 5h3a2 2 0 0 0 2-2v-3"/><path d="M8 12h8m-4-4v8"/></svg><span id="resize-button-label">Resize images</span></button>
+            <div class="status-message" id="status-message" role="status" aria-live="polite"></div>
+            <div class="privacy-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Local processing · No image uploads · No account required.</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>© <span id="footer-year">2026</span> Image Resizer. Built for clean, sharp results.</div>
+    <div class="footer-right">Made with <span class="footer-heart">♥</span> by <a href="https://kayralrics.com" target="_blank" rel="noopener noreferrer">kayralrics.com</a></div>
+  </footer>
+
+  <script>
+    (() => {
+      'use strict';
+      const MAX_SIDE = 16000;
+      const MAX_PIXELS = 100_000_000;
+      const $ = (id) => document.getElementById(id);
+      const fileInput = $('file-input');
+      const uploadArea = $('upload-area');
+      const previewCanvas = $('preview-canvas');
+      const previewCtx = previewCanvas.getContext('2d', { alpha: true });
+      const emptyState = $('empty-state');
+      const queueList = $('queue-list');
+      const widthInput = $('width-input');
+      const heightInput = $('height-input');
+      const lockButton = $('lock-button');
+      const presetSelect = $('preset-select');
+      const formatSelect = $('format-select');
+      const transparentInput = $('transparent-input');
+      const backgroundInput = $('background-input');
+      const qualityInput = $('quality-input');
+      const qualityBlock = $('quality-block');
+      const qualityValue = $('quality-value');
+      const resizeButton = $('resize-button');
+      const resizeButtonLabel = $('resize-button-label');
+      const resizeButtonIcon = $('resize-button-icon');
+      const statusMessage = $('status-message');
+      const resultsBar = $('results-bar');
+      const downloadZipButton = $('download-zip-button');
+      const modeHelp = $('mode-help');
+      const dimensionHelp = $('dimension-help');
+      const sourceMeta = $('source-meta');
+      const outputMeta = $('output-meta');
+      const previewState = $('preview-state');
+      let files = [];
+      let activeId = null;
+      let nextId = 1;
+      let processing = false;
+      let previewGeneration = 0;
+      let lastPreviewSignature = '';
+      const settings = {
+        width: 1080, height: 1080, locked: true, driver: 'width', mode: 'contain',
+        format: 'image/png', quality: 0.92, transparent: true, background: '#ffffff', qualityMode: 'high'
+      };
+
+      const modeDescriptions = {
+        contain: 'Contain preserves the full image and adds space where needed.',
+        cover: 'Cover fills the full canvas; edges may be cropped to fit.',
+        stretch: 'Stretch fills the exact dimensions, but can change image proportions.'
+      };
+      const svg = {
+        remove: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg>',
+        download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>',
+        image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>'
+      };
+
+      $('footer-year').textContent = String(new Date().getFullYear());
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes < 0) return '—';
+        if (bytes < 1024) return `${bytes} B`;
+        const units = ['KB', 'MB', 'GB'];
+        let n = bytes / 1024, i = 0;
+        while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+        return `${n.toFixed(n >= 100 ? 0 : n >= 10 ? 1 : 2)} ${units[i]}`;
+      }
+      function extensionForMime(mime) { return ({'image/jpeg':'jpg','image/webp':'webp','image/avif':'avif','image/gif':'gif','image/bmp':'bmp','image/tiff':'tif','image/svg+xml':'svg','image/vnd.adobe.photoshop':'psd','image/x-icon':'ico','image/jp2':'jp2','image/jxl':'jxl','image/x-tga':'tga','image/x-portable-pixmap':'ppm','image/x-portable-graymap':'pgm','image/x-portable-bitmap':'pbm','image/qoi':'qoi','image/x-xcf':'xcf'})[mime] || 'png'; }
+      function baseName(name) { return name.replace(/\.[^.]*$/, '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim() || 'image'; }
+      function setStatus(message, type = 'info') {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message show ${type}`;
+      }
+      function clearStatus() { statusMessage.textContent = ''; statusMessage.className = 'status-message'; }
+      function activeFile() { return files.find(item => item.id === activeId) || null; }
+      function loadedFiles() { return files.filter(item => item.image); }
+      function getOutputDimensions(item) {
+        let w = Math.max(1, Math.min(MAX_SIDE, Math.round(Number(settings.width) || 1)));
+        let h = Math.max(1, Math.min(MAX_SIDE, Math.round(Number(settings.height) || 1)));
+        if (settings.locked && item && item.width && item.height) {
+          if (settings.driver === 'width') h = Math.max(1, Math.min(MAX_SIDE, Math.round(w * item.height / item.width)));
+          else w = Math.max(1, Math.min(MAX_SIDE, Math.round(h * item.width / item.height)));
+        }
+        return { width: w, height: h };
+      }
+      function syncDimensions() {
+        const item = activeFile();
+        const dims = getOutputDimensions(item && item.image ? item : null);
+        widthInput.value = String(dims.width);
+        heightInput.value = String(dims.height);
+        widthInput.max = String(MAX_SIDE);
+        heightInput.max = String(MAX_SIDE);
+        lockButton.setAttribute('aria-pressed', String(settings.locked));
+        lockButton.title = settings.locked ? 'Aspect ratio locked' : 'Aspect ratio unlocked';
+        lockButton.setAttribute('aria-label', settings.locked ? 'Unlock aspect ratio' : 'Lock aspect ratio');
+        lockButton.innerHTML = settings.locked
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7-2"/></svg>';
+        dimensionHelp.textContent = settings.locked
+          ? `Aspect ratio locked. ${settings.driver === 'width' ? 'Width' : 'Height'} drives the size; each image keeps its original proportions.`
+          : `Exact canvas size. Choose Contain, Cover, or Stretch to control how each image fits.`;
+      }
+      function syncSettings() {
+        syncDimensions();
+        document.querySelectorAll('[data-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === settings.mode)));
+        modeHelp.textContent = modeDescriptions[settings.mode];
+        formatSelect.value = settings.format;
+        transparentInput.checked = settings.transparent;
+        backgroundInput.value = settings.background;
+        const isLossy = ['image/jpeg','image/webp','image/avif','image/jp2','image/jxl'].includes(settings.format);
+        qualityBlock.style.opacity = isLossy ? '1' : '.45';
+        qualityInput.disabled = !isLossy;
+        qualityValue.textContent = `${Math.round(settings.quality * 100)}%`;
+        $('background-help').textContent = ['image/jpeg','image/bmp'].includes(settings.format)
+          ? 'This format is exported against the selected background.'
+          : settings.transparent ? 'Transparent areas are preserved where the format allows.' : 'This color fills empty canvas areas.';
+        backgroundInput.disabled = settings.transparent && !['image/jpeg','image/bmp'].includes(settings.format);
+        $('queue-count').textContent = `${files.length} ${files.length === 1 ? 'image' : 'images'}`;
+        resizeButton.disabled = processing || files.length === 0 || loadedFiles().length === 0;
+        resizeButtonLabel.textContent = processing ? 'Resizing images…' : `Resize ${files.length || ''} ${files.length === 1 ? 'image' : 'images'}`.replace(/\s+/g, ' ').trim();
+        resizeButtonIcon.classList.toggle('spinning', processing);
+        resizeButtonIcon.innerHTML = processing
+          ? '<path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v4m0-4 4 1"/>'
+          : '<path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3m13 5h3a2 2 0 0 0 2-2v-3"/><path d="M8 12h8m-4-4v8"/>';
+        renderQueue();
+        updatePreview();
+      }
+      function updateResultBar() {
+        const finished = files.filter(item => item.resultBlob);
+        resultsBar.classList.toggle('show', finished.length > 0);
+        if (finished.length) {
+          $('results-title').textContent = `${finished.length} ${finished.length === 1 ? 'image is' : 'images are'} ready`;
+          $('results-sub').textContent = `Download each image or bundle all ${finished.length} result${finished.length === 1 ? '' : 's'} into a ZIP file.`;
+          downloadZipButton.disabled = processing;
+        }
+      }
+      function renderQueue() {
+        queueList.replaceChildren();
+        if (!files.length) {
+          const empty = document.createElement('div');
+          empty.className = 'queue-empty';
+          empty.textContent = 'Your selected images will appear here.';
+          queueList.append(empty);
+          updateResultBar();
+          return;
+        }
+        files.forEach(item => {
+          const row = document.createElement('div');
+          row.className = `queue-item${item.id === activeId ? ' active' : ''}`;
+          const thumb = document.createElement('button');
+          thumb.type = 'button'; thumb.className = 'queue-thumb'; thumb.setAttribute('aria-label', `Preview ${item.file.name}`);
+          if (item.thumbUrl) {
+            const img = document.createElement('img'); img.src = item.thumbUrl; img.alt = ''; thumb.append(img);
+          } else thumb.innerHTML = svg.image;
+          thumb.addEventListener('click', () => selectFile(item.id));
+          const details = document.createElement('div'); details.className = 'queue-details'; details.tabIndex = 0; details.setAttribute('role', 'button'); details.setAttribute('aria-label', `Select ${item.file.name}`);
+          details.addEventListener('click', () => selectFile(item.id));
+          details.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectFile(item.id); } });
+          const name = document.createElement('div'); name.className = 'queue-name'; name.textContent = item.file.name; name.title = item.file.name;
+          const meta = document.createElement('div'); meta.className = 'queue-meta';
+          if (item.error) {
+            const err = document.createElement('span'); err.className = 'queue-error'; err.textContent = item.error; meta.append(err);
+          } else if (!item.image) {
+            meta.textContent = 'Loading image…';
+          } else {
+            const dimensions = document.createElement('span'); dimensions.textContent = `${item.width.toLocaleString()} × ${item.height.toLocaleString()}`;
+            const size = document.createElement('span'); size.textContent = formatBytes(item.file.size);
+            meta.append(dimensions, size);
+            if (item.resultBlob) {
+              const result = document.createElement('span'); result.className = 'queue-result'; result.textContent = `Ready · ${item.outputWidth.toLocaleString()} × ${item.outputHeight.toLocaleString()} · ${formatBytes(item.resultBlob.size)}`;
+              meta.append(result);
+            }
+          }
+          details.append(name, meta);
+          row.append(thumb, details);
+          if (item.resultBlob) {
+            const dl = document.createElement('button'); dl.type = 'button'; dl.className = 'button button-quiet download-mini'; dl.innerHTML = svg.download; dl.title = `Download ${item.outputName}`; dl.setAttribute('aria-label', `Download ${item.outputName}`);
+            dl.addEventListener('click', () => downloadBlob(item.resultBlob, item.outputName)); row.append(dl);
+          }
+          const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'button button-quiet remove'; remove.innerHTML = svg.remove; remove.title = `Remove ${item.file.name}`; remove.setAttribute('aria-label', `Remove ${item.file.name}`); remove.disabled = processing;
+          remove.addEventListener('click', () => removeFile(item.id));
+          row.append(remove);
+          queueList.append(row);
+        });
+        updateResultBar();
+      }
+      function selectFile(id) {
+        const previous = activeFile();
+        if (previous && settings.locked && settings.driver === 'width') {
+          // Width remains the controlling dimension for the newly selected image.
+        }
+        activeId = id;
+        const item = activeFile();
+        if (item && item.image && !settings.locked) { /* Exact custom dimensions remain unchanged. */ }
+        syncSettings();
+      }
+      function removeFile(id) {
+        if (processing) return;
+        const index = files.findIndex(item => item.id === id);
+        if (index < 0) return;
+        const [removed] = files.splice(index, 1);
+        if (removed.thumbUrl) URL.revokeObjectURL(removed.thumbUrl);
+        if (removed.image && typeof removed.image.close === 'function') { try { removed.image.close(); } catch (_) {} }
+        if (activeId === id) activeId = files[Math.min(index, files.length - 1)]?.id ?? null;
+        if (!files.some(item => item.resultBlob)) resultsBar.classList.remove('show');
+        clearStatus(); syncSettings();
+      }
+      function getExtension(name) { const match = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/); return match ? match[1] : ''; }
+      function loadWithImageElement(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            if (!image.naturalWidth || !image.naturalHeight) { reject(new Error('Could not read image dimensions')); return; }
+            resolve({ image, width: image.naturalWidth, height: image.naturalHeight });
+          };
+          image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Native browser decoder unavailable')); };
+          image.src = url;
+        });
+      }
+      function loadRemoteScript(src, globalName) {
+        if (window[globalName]) return Promise.resolve(window[globalName]);
+        if (!loadRemoteScript.cache) loadRemoteScript.cache = {};
+        if (loadRemoteScript.cache[src]) return loadRemoteScript.cache[src];
+        const pending = new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src; script.async = true;
+          script.onload = () => window[globalName] ? resolve(window[globalName]) : reject(new Error('Decoder loaded but did not expose its API'));
+          script.onerror = () => reject(new Error('Could not load the extended decoder. Check your internet connection and try again.'));
+          document.head.append(script);
+        });
+        loadRemoteScript.cache[src] = pending.catch(error => { delete loadRemoteScript.cache[src]; throw error; });
+        return loadRemoteScript.cache[src];
+      }
+      const jsquashModulePromises = Object.create(null);
+      async function getJsquashModule(codec) {
+        const urls = { avif: 'https://esm.sh/@jsquash/avif@2.1.1', jxl: 'https://esm.sh/@jsquash/jxl@1.3.0' };
+        if (!urls[codec]) throw new Error('No WebAssembly codec is configured for this format.');
+        if (!jsquashModulePromises[codec]) {
+          jsquashModulePromises[codec] = import(urls[codec]).catch(error => {
+            delete jsquashModulePromises[codec];
+            throw new Error(`${codec.toUpperCase()} WebAssembly codec could not load. Check your internet connection.`);
+          });
+        }
+        return jsquashModulePromises[codec];
+      }
+      async function encodeWithJsquash(canvas, codec, quality) {
+        const module = await getJsquashModule(codec);
+        const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        const encoded = await module.encode(pixels, { quality: Math.max(1, Math.min(100, Math.round(quality * 100))) });
+        return new Blob([encoded], { type: codec === 'avif' ? 'image/avif' : 'image/jxl' });
+      }
+      async function decodeWithJsquash(file, codec) {
+        const module = await getJsquashModule(codec);
+        const decoded = await module.decode(await file.arrayBuffer());
+        if (!decoded || !decoded.width || !decoded.height || !decoded.data) throw new Error('The extended codec returned no pixel data.');
+        if (decoded.width * decoded.height > MAX_PIXELS) throw new Error('This image is too large to open safely in the browser.');
+        const canvas = document.createElement('canvas'); canvas.width = decoded.width; canvas.height = decoded.height;
+        const rgba = new Uint8ClampedArray(decoded.data);
+        canvas.getContext('2d').putImageData(new ImageData(rgba, decoded.width, decoded.height), 0, 0);
+        return { image: canvas, width: decoded.width, height: decoded.height };
+      }
+      let magickModulePromise = null;
+      async function getMagickModule() {
+        if (!magickModulePromise) {
+          magickModulePromise = import('https://knicknic.github.io/wasm-imagemagick/magickApi.js').catch(error => {
+            magickModulePromise = null;
+            throw new Error('The extended format engine could not load. Check your internet connection, then retry.');
+          });
+        }
+        return magickModulePromise;
+      }
+      async function convertBlobWithMagick(blob, sourceName, targetName, quality = null) {
+        const Magick = await getMagickModule();
+        const sourceBytes = new Uint8Array(await blob.arrayBuffer());
+        const command = ['convert', sourceName];
+        if (quality !== null && Number.isFinite(Number(quality))) command.push('-quality', String(Math.max(1, Math.min(100, Math.round(Number(quality) * 100)))));
+        command.push(targetName);
+        const response = await Magick.Call([{ name: sourceName, content: sourceBytes }], command);
+        const outputs = Array.isArray(response) ? response : (response && (response.processedFiles || response.outputFiles || response.files)) || [];
+        const output = outputs.find(file => String(file.name || '').toLowerCase() === targetName.toLowerCase()) || outputs[0];
+        if (!output || !output.content) throw new Error('The extended format engine could not decode this file. It may use an unsupported codec or be damaged.');
+        const content = output.content instanceof Uint8Array ? output.content : new Uint8Array(output.content);
+        return new Blob([content]);
+      }
+      async function decodeWithTiff(file) {
+        const UTIF = await loadRemoteScript('https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js', 'UTIF');
+        const buffer = await file.arrayBuffer();
+        const pages = UTIF.decode(buffer);
+        if (!pages || !pages.length) throw new Error('No readable TIFF image was found.');
+        UTIF.decodeImage(buffer, pages[0]);
+        const width = pages[0].width, height = pages[0].height;
+        if (!width || !height || width * height > MAX_PIXELS) throw new Error('This TIFF is too large to open safely in the browser.');
+        const rgba = UTIF.toRGBA8(pages[0]);
+        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
+        return { image: canvas, width, height };
+      }
+      async function decodeWithMagick(file) {
+        const ext = getExtension(file.name) || 'dat';
+        const safeExt = /^[a-z0-9]{1,8}$/.test(ext) ? ext : 'dat';
+        const sourceName = `input-image.${safeExt}`;
+        const png = await convertBlobWithMagick(file, sourceName, 'decoded-output.png');
+        const bitmap = typeof createImageBitmap === 'function' ? await createImageBitmap(png) : null;
+        if (bitmap) return { image: bitmap, width: bitmap.width, height: bitmap.height, displayBlob: png };
+        const loaded = await loadWithImageElement(new File([png], 'decoded-output.png', { type: 'image/png' }));
+        return { ...loaded, displayBlob: png };
+      }
+      async function decodeWithHeic(file) {
+        await loadRemoteScript('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.js', 'heic2any');
+        const converted = await window.heic2any({ blob: file, toType: 'image/png', quality: 0.98 });
+        const blob = Array.isArray(converted) ? converted[0] : converted;
+        if (!blob) throw new Error('The HEIC/HEIF decoder did not return an image.');
+        const bitmap = typeof createImageBitmap === 'function' ? await createImageBitmap(blob) : null;
+        if (bitmap) return { image: bitmap, width: bitmap.width, height: bitmap.height, displayBlob: blob };
+        const loaded = await loadWithImageElement(new File([blob], 'decoded-heic.png', { type: 'image/png' }));
+        return { ...loaded, displayBlob: blob };
+      }
+      async function loadImage(file) {
+        try {
+          if (typeof createImageBitmap === 'function') {
+            const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+            if (bitmap.width && bitmap.height) return { image: bitmap, width: bitmap.width, height: bitmap.height };
+            bitmap.close?.();
+          }
+        } catch (_) { /* Use a format-specific decoder below. */ }
+        try { return await loadWithImageElement(file); } catch (_) { /* Try extended decoders. */ }
+        const ext = getExtension(file.name);
+        try {
+          if (['heic','heif','hif'].includes(ext)) {
+            try { return await decodeWithHeic(file); } catch (_) { return await decodeWithMagick(file); }
+          }
+          if (['tif','tiff'].includes(ext) && window.UTIF) return await decodeWithTiff(file);
+          if (['tif','tiff'].includes(ext)) {
+            try { return await decodeWithTiff(file); } catch (_) { /* ImageMagick may decode unusual TIFF variants. */ }
+          }
+          if (ext === 'avif') { try { return await decodeWithJsquash(file, 'avif'); } catch (_) { /* Try the extended ImageMagick engine. */ } }
+          if (ext === 'jxl') { try { return await decodeWithJsquash(file, 'jxl'); } catch (_) { /* Try the extended ImageMagick engine. */ } }
+          if (['dng','cr2','cr3','nef','arw','orf','rw2','raf','pef','srw','raw','3fr','ari','bay','cap','dcr','dcs','drf','eip','erf','fff','gpr','iiq','k25','kdc','mdc','mef','mos','mrw','nrw','obm','ptx','pxn','r3d','rwl','sr2','srf','x3f'].includes(ext)) {
+            try { return await decodeWithMagick(file); } catch (_) { throw new Error('This camera RAW file could not be decoded. RAW support varies by camera model and embedded preview.'); }
+          }
+          return await decodeWithMagick(file);
+        } catch (error) {
+          throw new Error(error && error.message ? error.message : 'No available decoder could open this image.');
+        }
+      }
+      async function addFiles(fileList) {
+        const incoming = Array.from(fileList || []).filter(file => file && (file.type.startsWith('image/') || /\.(3fr|ari|arw|avif|bay|bmp|cap|cin|cr2|cr3|crw|dcr|dcs|dds|dng|dpx|drf|eip|erf|eps|exr|fff|fits|gif|gpr|hdr|heic|heif|icns|ico|iiq|jfif|jng|jp2|j2k|jpe?g|jxl|k25|kdc|mdc|mef|mos|mrw|nef|nrw|obm|orf|pbm|pcx|pdf|pef|pfm|pgm|pict|png|pnm|ppm|psd|psb|ptx|pxn|qoi|raf|r3d|raw|rw2|rwl|sgi|sr2|srf|srw|svg|sun|tga|tif|tiff|webp|wpg|xbm|xcf|x3f|xpm)$/i.test(file.name)));
+        if (!incoming.length) { setStatus('Choose a supported image file to get started.', 'error'); return; }
+        const unsupported = Array.from(fileList || []).length - incoming.length;
+        clearStatus();
+        if (unsupported > 0) setStatus(`${unsupported} non-image file${unsupported === 1 ? ' was' : 's were'} skipped.`, 'info');
+        const newItems = incoming.map(file => ({ id: nextId++, file, image: null, width: 0, height: 0, thumbUrl: null, error: null, resultBlob: null, outputName: null, outputWidth: 0, outputHeight: 0 }));
+        files.push(...newItems);
+        if (!activeId && newItems.length) activeId = newItems[0].id;
+        syncSettings();
+        for (const item of newItems) {
+          try {
+            const loaded = await loadImage(item.file);
+            item.image = loaded.image; item.width = loaded.width; item.height = loaded.height;
+            item.thumbUrl = URL.createObjectURL(loaded.displayBlob || item.file);
+            if (files.length === newItems.length && item.id === newItems[0].id) {
+              settings.width = item.width; settings.height = item.height; settings.driver = 'width';
+            }
+            if (item.id === activeId) {
+              settings.height = item.height;
+              if (settings.width === 1080 && settings.height === 1080 && files.length === 1) settings.width = item.width;
+            }
+          } catch (error) {
+            item.error = error && error.message ? error.message : 'Could not open this image';
+          }
+          const currentActive = activeFile();
+          if ((!currentActive || !currentActive.image || currentActive.error) && item.image) activeId = item.id;
+          syncSettings();
+        }
+        if (!loadedFiles().length) setStatus('No selected files could be decoded. For extended formats, check your internet connection and try again.', 'error');
+        else if (!unsupported) clearStatus();
+        fileInput.value = '';
+      }
+      function drawComposition(canvas, image, sourceWidth, sourceHeight, destWidth, destHeight, mode, transparent, background, mime, progressive) {
+        const ctx = canvas.getContext('2d', { alpha: true });
+        canvas.width = destWidth; canvas.height = destHeight;
+        ctx.clearRect(0, 0, destWidth, destHeight);
+        const hasAlpha = transparent && !['image/jpeg','image/bmp'].includes(mime);
+        if (!hasAlpha) { ctx.fillStyle = background || '#ffffff'; ctx.fillRect(0, 0, destWidth, destHeight); }
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        let drawImage = image, sw = sourceWidth, sh = sourceHeight;
+        let dw, dh;
+        if (mode === 'stretch') { dw = destWidth; dh = destHeight; }
+        else {
+          const scale = mode === 'cover' ? Math.max(destWidth / sourceWidth, destHeight / sourceHeight) : Math.min(destWidth / sourceWidth, destHeight / sourceHeight);
+          dw = sourceWidth * scale; dh = sourceHeight * scale;
+        }
+        if (progressive && Math.min(dw / sourceWidth, dh / sourceHeight) < 1) {
+          let current = image, currentW = sourceWidth, currentH = sourceHeight;
+          const longestTarget = Math.max(dw, dh);
+          while (Math.max(currentW, currentH) > longestTarget * 2 && currentW > 1 && currentH > 1) {
+            const nextW = Math.max(1, Math.floor(currentW / 2));
+            const nextH = Math.max(1, Math.floor(currentH / 2));
+            const intermediate = document.createElement('canvas');
+            intermediate.width = nextW; intermediate.height = nextH;
+            const ictx = intermediate.getContext('2d');
+            ictx.imageSmoothingEnabled = true; ictx.imageSmoothingQuality = 'high';
+            ictx.drawImage(current, 0, 0, currentW, currentH, 0, 0, nextW, nextH);
+            current = intermediate; currentW = nextW; currentH = nextH;
+          }
+          drawImage = current; sw = currentW; sh = currentH;
+          if (mode === 'stretch') { dw = destWidth; dh = destHeight; }
+          else {
+            const scale = mode === 'cover' ? Math.max(destWidth / sw, destHeight / sh) : Math.min(destWidth / sw, destHeight / sh);
+            dw = sw * scale; dh = sh * scale;
+          }
+        }
+        const dx = (destWidth - dw) / 2;
+        const dy = (destHeight - dh) / 2;
+        ctx.drawImage(drawImage, 0, 0, sw, sh, dx, dy, dw, dh);
+        return canvas;
+      }
+      function updatePreview() {
+        const generation = ++previewGeneration;
+        const item = activeFile();
+        if (!item || !item.image) {
+          previewCanvas.style.display = 'none'; emptyState.style.display = 'block';
+          previewState.textContent = item && !item.error ? 'Loading image' : 'Waiting for image';
+          sourceMeta.textContent = item ? (item.error || 'Loading image…') : 'No image selected';
+          outputMeta.textContent = 'Output: —'; lastPreviewSignature = '';
+          return;
+        }
+        const dims = getOutputDimensions(item);
+        if (dims.width * dims.height > MAX_PIXELS) {
+          previewCanvas.style.display = 'none'; emptyState.style.display = 'block';
+          emptyState.querySelector('h3').textContent = 'Output dimensions are too large';
+          emptyState.querySelector('p').textContent = `Keep the output at or below ${MAX_PIXELS.toLocaleString()} pixels total to avoid browser memory issues.`;
+          sourceMeta.textContent = `${item.width.toLocaleString()} × ${item.height.toLocaleString()} px`;
+          outputMeta.textContent = `Output: ${dims.width.toLocaleString()} × ${dims.height.toLocaleString()} px`;
+          previewState.textContent = 'Check dimensions';
+          return;
+        }
+        if (emptyState.querySelector('h3').textContent === 'Output dimensions are too large') {
+          emptyState.querySelector('h3').textContent = 'Your next great resize starts here';
+          emptyState.querySelector('p').textContent = 'Drop an image into the upload area below, or browse your files to get started.';
+        }
+        const scale = 900 / Math.max(dims.width, dims.height);
+        const pw = Math.max(1, Math.round(dims.width * scale));
+        const ph = Math.max(1, Math.round(dims.height * scale));
+        const signature = [item.id, pw, ph, settings.mode, settings.transparent, settings.background, settings.format, settings.quality].join('|');
+        sourceMeta.textContent = `${item.file.name} · ${item.width.toLocaleString()} × ${item.height.toLocaleString()} px · ${formatBytes(item.file.size)}`;
+        outputMeta.textContent = `Output: ${dims.width.toLocaleString()} × ${dims.height.toLocaleString()} px`;
+        previewState.textContent = 'Live preview';
+        if (signature === lastPreviewSignature) return;
+        lastPreviewSignature = signature;
+        emptyState.style.display = 'none'; previewCanvas.style.display = 'block';
+        requestAnimationFrame(() => {
+          if (generation !== previewGeneration) return;
+          drawComposition(previewCanvas, item.image, item.width, item.height, pw, ph, settings.mode, settings.transparent, settings.background, settings.format, false);
+        });
+      }
+      function getMimeForFile() { return settings.format; }
+      function canvasToSVGBlob(canvas) {
+        const raster = canvas.toDataURL('image/png');
+        const svgText = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="${canvas.width}" height="${canvas.height}" href="${raster}"/></svg>`;
+        return new Blob([svgText], { type: 'image/svg+xml' });
+      }
+      function canvasToBmpBlob(canvas) {
+        const width = canvas.width, height = canvas.height;
+        const ctx = canvas.getContext('2d');
+        const pixels = ctx.getImageData(0, 0, width, height).data;
+        const rowBytes = Math.floor((width * 3 + 3) / 4) * 4;
+        const pixelBytes = rowBytes * height;
+        const buffer = new ArrayBuffer(54 + pixelBytes);
+        const view = new DataView(buffer); const bytes = new Uint8Array(buffer);
+        bytes[0] = 0x42; bytes[1] = 0x4d;
+        view.setUint32(2, buffer.byteLength, true); view.setUint32(10, 54, true);
+        view.setUint32(14, 40, true); view.setInt32(18, width, true); view.setInt32(22, height, true);
+        view.setUint16(26, 1, true); view.setUint16(28, 24, true); view.setUint32(34, pixelBytes, true);
+        view.setInt32(38, 2835, true); view.setInt32(42, 2835, true);
+        for (let y = 0; y < height; y++) {
+          const targetRow = 54 + (height - 1 - y) * rowBytes;
+          for (let x = 0; x < width; x++) {
+            const src = (y * width + x) * 4, dst = targetRow + x * 3;
+            bytes[dst] = pixels[src + 2]; bytes[dst + 1] = pixels[src + 1]; bytes[dst + 2] = pixels[src];
+          }
+        }
+        return new Blob([buffer], { type: 'image/bmp' });
+      }
+      async function canvasToBlob(canvas, mime, quality) {
+        if (mime === 'image/svg+xml') return canvasToSVGBlob(canvas);
+        if (mime === 'image/bmp') return canvasToBmpBlob(canvas);
+        if (mime === 'image/jxl') {
+          try { return await encodeWithJsquash(canvas, 'jxl', quality); } catch (_) { /* Try ImageMagick below. */ }
+        }
+        const magickOutputTypes = ['image/gif','image/tiff','image/vnd.adobe.photoshop','image/x-icon','image/jp2','image/jxl','image/x-tga','image/x-portable-pixmap','image/x-portable-graymap','image/x-portable-bitmap','image/qoi','image/x-xcf'];
+        if (magickOutputTypes.includes(mime)) {
+          const ext = extensionForMime(mime);
+          const png = await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not prepare the image for conversion.')), 'image/png'));
+          const converted = await convertBlobWithMagick(png, 'resizer-source.png', `resizer-output.${ext}`, ['image/jp2','image/jxl'].includes(mime) ? quality : null);
+          return new Blob([await converted.arrayBuffer()], { type: mime });
+        }
+        return new Promise((resolve, reject) => {
+          try {
+            canvas.toBlob(async blob => {
+              if (!blob) { reject(new Error('The browser could not encode this image format.')); return; }
+              if (blob.type === mime) { resolve(blob); return; }
+              if (mime === 'image/avif') {
+                try {
+                  resolve(await encodeWithJsquash(canvas, 'avif', quality));
+                } catch (_) {
+                  try {
+                    const converted = await convertBlobWithMagick(blob, 'resizer-source.png', 'resizer-output.avif');
+                    resolve(new Blob([await converted.arrayBuffer()], { type: 'image/avif' }));
+                  } catch (_) { reject(new Error('AVIF export is not available in the browser or extended codecs. Choose WebP, JPEG, or PNG instead.')); }
+                }
+                return;
+              }
+              reject(new Error(`This browser cannot export ${extensionForMime(mime).toUpperCase()} reliably. Choose PNG, JPEG, or WebP instead.`));
+            }, mime, quality);
+          } catch (error) { reject(error); }
+        });
+      }
+      async function resizeAll() {
+        if (processing || !files.length) return;
+        const batch = files.filter(item => item.image);
+        if (!batch.length) { setStatus('Wait until at least one image has finished loading.', 'info'); return; }
+        processing = true;
+        batch.forEach(item => { item.resultBlob = null; item.outputName = null; item.error = null; });
+        resultsBar.classList.remove('show');
+        clearStatus(); syncSettings();
+        let done = 0, failed = 0;
+        try {
+          for (const item of batch) {
+            const dims = getOutputDimensions(item);
+            if (dims.width > MAX_SIDE || dims.height > MAX_SIDE || dims.width * dims.height > MAX_PIXELS) {
+              item.error = `Output too large (max ${MAX_PIXELS.toLocaleString()} pixels)`;
+              failed++; renderQueue(); continue;
+            }
+            try {
+              const canvas = document.createElement('canvas');
+              drawComposition(canvas, item.image, item.width, item.height, dims.width, dims.height, settings.mode, settings.transparent, settings.background, getMimeForFile(), true);
+              const blob = await canvasToBlob(canvas, getMimeForFile(), settings.quality);
+              const actualMime = blob.type || getMimeForFile();
+              const ext = extensionForMime(actualMime);
+              const actualW = canvas.width, actualH = canvas.height;
+              item.resultBlob = blob;
+              item.outputWidth = actualW; item.outputHeight = actualH;
+              item.outputName = `${baseName(item.file.name)}-${actualW}x${actualH}.${ext}`;
+              item.error = null; done++;
+              canvas.width = 1; canvas.height = 1;
+            } catch (error) {
+              item.error = error && error.message ? error.message : 'Could not resize this image'; failed++;
+            }
+            renderQueue();
+            await new Promise(resolve => requestAnimationFrame(() => resolve()));
+          }
+        } finally {
+          processing = false;
+          syncSettings();
+        }
+        if (done && failed) setStatus(`${done} image${done === 1 ? '' : 's'} resized; ${failed} could not be processed. Review the queue for details.`, 'info');
+        else if (done) setStatus(`Success — ${done} image${done === 1 ? ' is' : 's are'} ready to download.`, 'success');
+        else setStatus('No images could be resized. Try smaller output dimensions or another image format.', 'error');
+        updateResultBar();
+      }
+      function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename; a.style.display = 'none';
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
+      const crcTable = (() => {
+        const table = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+          let c = n;
+          for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+          table[n] = c >>> 0;
+        }
+        return table;
+      })();
+      function crc32(bytes) {
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xff];
+        return (crc ^ (-1)) >>> 0;
+      }
+      function dosDateTime(date = new Date()) {
+        const year = Math.max(1980, date.getFullYear());
+        const time = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+        const day = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+        return { time, day };
+      }
+      function buildZip(entries) {
+        const encoder = new TextEncoder();
+        const localParts = [], centralParts = [];
+        let offset = 0;
+        const { time, day } = dosDateTime();
+        for (const entry of entries) {
+          const nameBytes = encoder.encode(entry.name);
+          const data = entry.bytes;
+          const crc = crc32(data);
+          const local = new Uint8Array(30 + nameBytes.length);
+          const lv = new DataView(local.buffer);
+          lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, 0x0800, true); lv.setUint16(8, 0, true);
+          lv.setUint16(10, time, true); lv.setUint16(12, day, true); lv.setUint32(14, crc, true);
+          lv.setUint32(18, data.length, true); lv.setUint32(22, data.length, true); lv.setUint16(26, nameBytes.length, true); lv.setUint16(28, 0, true);
+          local.set(nameBytes, 30);
+          localParts.push(local, data);
+          const central = new Uint8Array(46 + nameBytes.length);
+          const cv = new DataView(central.buffer);
+          cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true);
+          cv.setUint16(12, time, true); cv.setUint16(14, day, true); cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true);
+          cv.setUint16(28, nameBytes.length, true); cv.setUint16(30, 0, true); cv.setUint16(32, 0, true); cv.setUint16(34, 0, true); cv.setUint16(36, 0, true); cv.setUint32(38, 0, true); cv.setUint32(42, offset, true);
+          central.set(nameBytes, 46); centralParts.push(central);
+          offset += local.length + data.length;
+        }
+        const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+        const end = new Uint8Array(22); const ev = new DataView(end.buffer);
+        ev.setUint32(0, 0x06054b50, true); ev.setUint16(4, 0, true); ev.setUint16(6, 0, true); ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
+        ev.setUint32(12, centralSize, true); ev.setUint32(16, offset, true); ev.setUint16(20, 0, true);
+        return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
+      }
+      async function downloadZip() {
+        const outputs = files.filter(item => item.resultBlob);
+        if (!outputs.length || processing) return;
+        downloadZipButton.disabled = true;
+        const oldText = downloadZipButton.textContent;
+        downloadZipButton.textContent = 'Preparing ZIP…';
+        try {
+          const entries = [];
+          const usedNames = new Set();
+          for (const item of outputs) {
+            let name = item.outputName || 'image.png';
+            if (usedNames.has(name.toLowerCase())) {
+              const dot = name.lastIndexOf('.'); const stem = dot >= 0 ? name.slice(0, dot) : name; const ext = dot >= 0 ? name.slice(dot) : '';
+              let index = 2; while (usedNames.has(`${stem}-${index}${ext}`.toLowerCase())) index++;
+              name = `${stem}-${index}${ext}`;
+            }
+            usedNames.add(name.toLowerCase());
+            entries.push({ name, bytes: new Uint8Array(await item.resultBlob.arrayBuffer()) });
+          }
+          const zip = buildZip(entries);
+          downloadBlob(zip, `image-resizer-${new Date().toISOString().slice(0, 10)}.zip`);
+          setStatus(`ZIP created with ${entries.length} image${entries.length === 1 ? '' : 's'}.`, 'success');
+        } catch (error) {
+          setStatus('The ZIP could not be created, likely because the batch is too large. Download the images individually instead.', 'error');
+        } finally {
+          downloadZipButton.disabled = false;
+          downloadZipButton.textContent = oldText;
+        }
+      }
+
+      fileInput.addEventListener('change', event => addFiles(event.target.files));
+      $('add-images-button').addEventListener('click', () => fileInput.click());
+      uploadArea.addEventListener('click', () => fileInput.click());
+      uploadArea.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); fileInput.click(); } });
+      ['dragenter', 'dragover'].forEach(type => uploadArea.addEventListener(type, event => { event.preventDefault(); event.stopPropagation(); uploadArea.classList.add('dragover'); }));
+      ['dragleave', 'drop'].forEach(type => uploadArea.addEventListener(type, event => { event.preventDefault(); event.stopPropagation(); uploadArea.classList.remove('dragover'); }));
+      uploadArea.addEventListener('drop', event => addFiles(event.dataTransfer && event.dataTransfer.files));
+      window.addEventListener('dragover', event => { if (event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files')) event.preventDefault(); });
+      window.addEventListener('drop', event => { if (event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files')) event.preventDefault(); });
+
+      widthInput.addEventListener('change', () => {
+        const value = Math.round(Number(widthInput.value));
+        if (!Number.isFinite(value) || value < 1) { syncDimensions(); return; }
+        settings.width = Math.min(MAX_SIDE, value); settings.driver = 'width'; presetSelect.value = 'custom';
+        clearPreviousResults(); syncSettings();
+      });
+      heightInput.addEventListener('change', () => {
+        const value = Math.round(Number(heightInput.value));
+        if (!Number.isFinite(value) || value < 1) { syncDimensions(); return; }
+        settings.height = Math.min(MAX_SIDE, value); settings.driver = 'height'; presetSelect.value = 'custom';
+        clearPreviousResults(); syncSettings();
+      });
+      lockButton.addEventListener('click', () => { settings.locked = !settings.locked; clearPreviousResults(); syncSettings(); });
+      presetSelect.addEventListener('change', () => {
+        if (presetSelect.value === 'custom') return;
+        const [w, h] = presetSelect.value.split('x').map(Number);
+        settings.width = w; settings.height = h; settings.locked = false; settings.driver = 'width';
+        clearPreviousResults(); syncSettings();
+      });
+      document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
+        settings.mode = button.dataset.mode; clearPreviousResults(); syncSettings();
+      }));
+      formatSelect.addEventListener('change', () => { settings.format = formatSelect.value; clearPreviousResults(); syncSettings(); });
+      transparentInput.addEventListener('change', () => { settings.transparent = transparentInput.checked; clearPreviousResults(); syncSettings(); });
+      backgroundInput.addEventListener('input', () => { settings.background = backgroundInput.value; clearPreviousResults(); updatePreview(); });
+      qualityInput.addEventListener('input', () => { settings.quality = Number(qualityInput.value) / 100; qualityValue.textContent = `${qualityInput.value}%`; clearPreviousResults(); updatePreview(); });
+      resizeButton.addEventListener('click', resizeAll);
+      downloadZipButton.addEventListener('click', downloadZip);
+
+      function clearPreviousResults() {
+        if (processing) return;
+        files.forEach(item => { item.resultBlob = null; item.outputName = null; item.outputWidth = 0; item.outputHeight = 0; if (item.image) item.error = null; });
+        resultsBar.classList.remove('show'); clearStatus();
+      }
+      syncSettings();
+    })();
+  </script>
+</body>
+</html>
